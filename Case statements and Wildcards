@@ -1,0 +1,139 @@
+--The purpose of this project was to categorize work-related transactions into easily identifiable and sortable groups, 
+allowing for efficient analysis. With this query, a 45-60 minute process was reduced to under 5 minutes. 
+
+
+SELECT [PARENTGLACCOUNT]
+      ,[SEQUENCENUMBER]
+      ,[EFFECTIVEDATE]
+      ,[POSTDATE]
+      ,[USERNUMBER]
+      ,[COMMENT]
+      ,[DEBITCREDITCODE]
+      ,[AMOUNT]				 /100 AS AMOUNT
+      ,[REFERENCE]
+      ,[GLCATEGORY]
+      ,[PROCESSORUSER]
+      ,[ORDINAL]
+	  ,CASE 
+
+			WHEN COMMENT LIKE '24%'
+			 AND AMOUNT > 0 
+			 AND COMMENT LIKE '%Searches%' 
+			 OR COMMENT LIKE '%24%' 
+			 AND COMMENT LIKE '%searches%' THEN 'United One (24)'
+
+			WHEN COMMENT LIKE '4584%' THEN 'Corp. Settlement (4584)'
+
+			WHEN COMMENT LIKE '9104%' THEN 'Trident (9104)'
+
+			WHEN COMMENT LIKE '8510%' THEN 'Appraisal Nation (8510)'
+
+			WHEN COMMENT LIKE '%4606%'
+			 AND COMMENT NOT LIKE '%Cred%Flood%'
+			 AND COMMENT NOT LIKE '%Mortg%' THEN 'Mortgage Info Svcs (4606)'
+			 
+			WHEN COMMENT LIKE '7284%' THEN 'Soldifi (7284)'
+			WHEN COMMENT LIKE '%9969%'
+			 AND AMOUNT > 0 
+			 OR COMMENT LIKE '%9969%' 
+			 AND COMMENT LIKE '%acc%' THEN 'Broad St Valuations (9969)'
+
+			WHEN COMMENT LIKE '%23%64%' THEN 'Visa Appraisal Fees'
+
+			WHEN COMMENT LIKE '%credi%/f%ood%'
+			 AND COMMENT NOT LIKE '%Credco%'
+			 AND COMMENT NOT LIKE '%10589%'
+			 OR COMMENT LIKE '%Cred%%/%' 
+			 AND COMMENT NOT LIKE '%Credco%'
+			 AND AMOUNT < 0
+			 AND COMMENT NOT LIKE '%10589%'
+			 OR COMMENT LIKE '%Cred%Flood%'
+			 AND COMMENT NOT LIKE '%Credco%' 
+			 AND AMOUNT < 0 
+			 AND COMMENT NOT LIKE '%10589%' THEN 'Credit/Flood'
+
+			 WHEN COMMENT LIKE '%Flood%cer%'
+			 AND COMMENT NOT LIKE '%10589%'
+			  OR COMMENT LIKE '%Flood%Fee%'
+			 AND COMMENT NOT LIKE '%10589%'
+			  OR COMMENT LIKE '%Flood%'
+			 AND DEBITCREDITCODE = 1
+			 AND COMMENT NOT LIKE '%10589%' THEN 'Flood Cert'
+
+		 	 WHEN COMMENT LIKE '%MTG%' 
+			  AND AMOUNT < 0
+			  OR COMMENT LIKE '%Apprais%'
+			  AND AMOUNT < 0
+			  OR COMMENT LIKE '%Mortgage%' 
+			  AND AMOUNT < 0 
+			  OR COMMENT LIKE '%APPR%'
+			  AND AMOUNT < 0 
+			  OR COMMENT LIKE '%[0-9]'
+			  AND AMOUNT < 0 THEN 'Appraisal Fees'
+
+			WHEN COMMENT LIKE '%MTG%' 
+			  AND AMOUNT > 0
+			  OR COMMENT LIKE '%Apprais%'
+			  AND AMOUNT > 0
+			  OR COMMENT LIKE '%Mortgage%'  
+			  AND COMMENT NOT LIKE '%10589%'
+			  AND AMOUNT > 0 THEN 'Appraisal Refunds'
+
+			WHEN COMMENT LIKE '%Report%' 
+			 AND COMMENT NOT LIKE '%10589%'
+			  OR COMMENT LIKE '%Rpt%' 
+			 AND COMMENT NOT LIKE '%10589%' 
+			  OR COMMENT LIKE '%Cr%dit Fee%'
+			 AND COMMENT NOT LIKE '%10589%' 
+			  OR COMMENT LIKE '%Credit%Repo%' 
+			 AND COMMENT NOT LIKE '%10589%' THEN 'Misc Credit Report Fees'			
+
+			WHEN COMMENT LIKE '%Simplifile%' 
+			 OR  COMMENT LIKE '%Visa%' 
+			 OR  COMMENT LIKE '%Supp%'
+			 OR  COMMENT LIKE '4041%' 
+			 OR  COMMENT LIKE '%Modification%' THEN 'MISC'
+
+			WHEN COMMENT LIKE '%Insp%' 
+			  AND AMOUNT > 0
+			  AND COMMENT NOT LIKE '%App%'
+			  OR COMMENT LIKE '%Rfnd%'
+			  AND AMOUNT > 0
+			  AND COMMENT NOT LIKE '%App%'
+			  OR COMMENT LIKE '%un%se%'
+			  AND AMOUNT > 0
+			  AND COMMENT NOT LIKE '%App%'
+			  OR COMMENT LIKE '%Refu%'
+			  AND AMOUNT > 0
+			  AND COMMENT NOT LIKE '%App%' THEN 'Inspection Refunds'
+
+			WHEN COMMENT LIKE '%Insp%' 
+			  AND COMMENT LIKE '%Fee%'
+			  AND COMMENT NOT LIKE '%App%'
+			  AND AMOUNT < 0 THEN 'Inspection Fees'
+
+			WHEN COMMENT LIKE '%Perm%' 
+			  OR COMMENT LIKE '%Reveri%' 
+			  OR COMMENT LIKE '%Const%'
+			  AND COMMENT NOT LIKE '%Flood%' THEN 'Construction'
+
+			WHEN COMMENT LIKE '149%' 
+			  OR COMMENT LIKE '%2184%' 
+			  OR COMMENT LIKE '%Under%wri%'
+			  OR COMMENT LIKE '%10029%' THEN 'Misc Processing & Underwriting Fees'		
+
+            WHEN COMMENT LIKE '%4696%' 
+			  OR COMMENT LIKE '%8294%'
+			  OR COMMENT LIKE '%10589%' THEN 'Credit Reports (10589 & 8294)'
+
+			WHEN COMMENT LIKe '%AC Reclass%' THEN 'Reclasses'
+
+			ELSE 'Other' END AS 'Category'
+
+
+FROM [ARCUSYM000].[dbo].[GLHISTORY]
+WHERE effectivedate BETWEEN '01/01/2023' AND '12/31/2023'
+AND PARENTGLACCOUNT LIKE '283330%'
+AND SEQUENCENUMBER <> '0'
+
+ORDER BY EFFECTIVEDATE
